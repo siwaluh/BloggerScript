@@ -2,7 +2,7 @@
 Create Simple Feed Blogger with BloggerScript
 
 ## Cara Menggunakan
-Mengambil sebagian postingan, hanya bisa mengambil maksimal 150 post.
+### Mengambil sebagian postingan, hanya bisa mengambil maksimal 150 post.
 ```
 const bloggerFeed = new BloggerScript();
 
@@ -11,7 +11,8 @@ bloggerFeed.xhr('https://blog_url.blogspot.com/feeds/posts/default?alt=json-in-s
 });
 ```
 
-Mengambil seluruh postingan yang ada, bisa mengambil lebih dari 150.
+
+### Mengambil seluruh postingan yang ada, bisa mengambil lebih dari 150.
 ```
 const bloggerSitemap = new BloggerSitemap();
 
@@ -20,7 +21,8 @@ bloggerSitemap.run('https://blog_url.blogspot.com/feeds/posts/default', function
 });
 ```
 
-Mengambil postingan random, hanya bisa mengambil maksimal 150 post.
+
+### Mengambil postingan random, hanya bisa mengambil maksimal 150 post.
 ```
 const bloggerRandom = new BloggerRandom({
   //Atur Jumlah Postingan yang ingin di tampilkan maksimal 150
@@ -32,7 +34,8 @@ bloggerRandom.run('https://blog_url.blogspot.com/feeds/posts/default', function(
 });
 ```
 
-Mengambil postingan per category, cocok untuk related post.
+
+### Mengambil postingan per category, cocok untuk related post.
 ```
 const bloggerRelated = new BloggerRelated({
   'labels': ['Blogger', 'Otomotif', 'Hiburan'],
@@ -44,6 +47,7 @@ bloggerRelated.run('https://blog_url.blogspot.com/feeds/posts/default', function
   console.log(entry); //Output Array Entry
 });
 ```
+
 
 ## Array Entry
 Output Dari Array Entry
@@ -57,7 +61,7 @@ bloggerFeed.xhr('https://blog_url.blogspot.com/feeds/posts/default?alt=json-in-s
 
     console.log(post.title); // judul postingan (string)
     console.log(post.link); // link postingan (string)
-    console.log(post.image); // gambar postinga (string)
+    console.log(post.image); // gambar postingan (string)
     console.log(post.label); // label postingan (array)
     console.log(post.date); //Tanggal postingan (string)
     console.log(post.published); //Tanggal postingan berformat ISO (string)
@@ -76,4 +80,29 @@ bloggerFeed.xhr('https://blog_url.blogspot.com/feeds/posts/default?alt=json-in-s
     };
   })
 });
+```
+
+## Fungsi warisan
+Beberapa fungsi yang bisa di pakai selain mengambil postingan
+
+### Fungsi Resize Image
+Mengubah ukuran gambar, jika gambar tidak di upload dari server blogger maka ukuran gambar tidak bisa di ubah.
+```
+const bloggerFeed = new BloggerScript();
+
+let image = 'image_url';
+let newSizeImage = 's800-c-rw';
+let newImage = bloggerFeed.resizeImage(image, newSizeImage);
+
+console.log(newImage) // output image resized;
+```
+Adapun Format untuk ukuran gambar nya sebagai berikut:
+```
+1. s800-c => Konversi berdasarkan lebar gambar yakni 800.
+2. w480-h360-c => Konversi berdasarkan gambar lebar 480 dan tinggi gambar 360.
+
+Dukungan Format Webp;
+untuk mengubah format gambar menjadi webp tambahkan "-rw" di akhir ukuran gambar.
+1. s800-c-rw
+2. w480-h360-c-rw
 ```
