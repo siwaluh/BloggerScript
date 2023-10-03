@@ -57,7 +57,7 @@ const bloggerFeed = new BloggerScript();
 bloggerFeed.xhr('https://blog_url.blogspot.com/feeds/posts/default?alt=json-in-script&max-results=20', function(entry) {
   console.log(entry); //Output Array entry
 
-  entry.foreach(function(post) {
+  entry.forEach(function(post) {
 
     console.log(post.title); // judul postingan (string)
     console.log(post.link); // link postingan (string)
