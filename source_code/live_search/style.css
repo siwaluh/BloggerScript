@@ -56,6 +56,87 @@ input[type="submit"] {
 
 /* modules/search.css */
 
+.live_search_items center {
+  color: white;
+  padding: 5px;
+}
+
+.live_search_items ul,
+.live_search_items li {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.live_search_items {
+  background-color: #222;
+}
+
+.live_search_items li {
+  font-family: inherit;
+  padding: 10px;
+  border-bottom: 1px solid #383838;
+  overflow: hidden;
+}
+
+.live_search_items a {
+  display: block;
+  color: white;
+  transition: color .3s;
+}
+
+.live_search_items a:hover {
+  color: red;
+}
+
+.live-search-thumb {
+  margin-right: 10px;
+  float: left;
+  width: 40px;
+  height: 60px;
+  overflow: hidden;
+  padding-bottom: 0;
+  box-sizing: content-box;
+}
+
+.live-search-thumb img {
+  max-width: 100%;
+  height: auto;
+}
+
+.live_search_items .over {
+  overflow: hidden;
+  float: right;
+  width: calc(100% - (40px + 10px));
+  box-sizing: content-box;
+}
+
+.over .autotitle {
+  font-size: .95em;
+  font-weight: 500;
+  margin-bottom: 3px;
+  white-space: nowrap;
+  overflow: hidde;
+  text-overflow: ellipsis;
+}
+
+.live_search_items span {
+  display: block;
+  color: #999;
+  margin-bottom: 2px;
+  font-size: 12px;
+  overflow: hidden;
+}
+
+.live_search_items span i {
+  display: inline-block;
+  margin: 2px 5px;
+  width: 4px;
+  height: 4px;
+  background: #777;
+  border-radius: 50%;
+}
+
 #live_search {
   --searchBackgroundColor: #42454e;
   --searchBorderRadius: .125rem;
@@ -75,6 +156,9 @@ input[type="submit"] {
   --searchInputButtonPaddingHorizontal: .625rem;
   --searchInputButtonPaddingVertical: .375rem;
   --searchInputButtonHoverBackgroundColor: #189e83;
+
+  width: 90%;
+  max-width: 600px;
 }
 
 .search {
