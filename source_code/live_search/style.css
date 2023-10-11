@@ -1,0 +1,96 @@
+.align {
+  display: grid;
+  place-items: center;
+}
+
+.button {
+  background-color: var(--searchInputButtonBackgroundColor);
+  color: var(--searchInputButtonColor);
+  font-weight: var(--searchInputButtonFontWeight);
+  padding: var(--searchInputButtonPaddingVertical) var(--searchInputButtonPaddingHorizontal);
+}
+
+.button:focus,
+.button:hover {
+  background-color: var(--searchInputButtonHoverBackgroundColor);
+}
+
+/* modules/form.css */
+
+::placeholder {
+  color: #42454e;
+}
+
+input {
+  appearance: none;
+  border: none;
+  font: inherit;
+  margin: 0;
+  outline: 0;
+  padding: 0;
+}
+
+input[type="search"] {
+  appearance: textfield;
+  box-sizing: content-box;
+}
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}
+
+input[type="submit"] {
+  cursor: pointer;
+}
+
+.form_field {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.form_input {
+  flex-grow: 1;
+}
+
+/* modules/search.css */
+
+#live_search {
+  --searchBackgroundColor: #42454e;
+  --searchBorderRadius: .125rem;
+  --searchFontSize: .75rem;
+  --searchPadding: .5rem;
+
+  --searchInputBorderRadius: .125rem;
+
+  --searchInputSearchBackgroundColor: #fff;
+  --searchInputSearchColor: #42454e;
+  --searchInputSearchPaddingHorizontal: .5rem;
+  --searchInputSearchPaddingVertical: .375rem;
+
+  --searchInputButtonBackgroundColor: #1bba9a;
+  --searchInputButtonColor: #fff;
+  --searchInputButtonFontWeight: bold;
+  --searchInputButtonPaddingHorizontal: .625rem;
+  --searchInputButtonPaddingVertical: .375rem;
+  --searchInputButtonHoverBackgroundColor: #189e83;
+}
+
+.search {
+  background-color: var(--searchBackgroundColor);
+  border-radius: var(--searchBorderRadius);
+  font-size: var(--searchFontSize);
+  padding: var(--searchPadding);
+}
+
+.search input[type="search"],
+.search input[type="submit"] {
+  border-radius: var(--searchInputBorderRadius);
+}
+
+.search input[type="search"] {
+  background-color: var(--searchInputSearchBackgroundColor);
+  color: var(--searchInputSearchColor);
+  padding: var(--searchInputSearchPaddingVertical) var(--searchInputSearchPaddingHorizontal);
+}
