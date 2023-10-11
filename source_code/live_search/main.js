@@ -78,6 +78,9 @@
           }
         }, 'Series');
       }, 2000);
+    } else {
+      if (width != 0)
+        b['searchLiveFiles'].remove();
     }
   });
 })(document, window);
