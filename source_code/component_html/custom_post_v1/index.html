@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang='en'>
+
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Custom Post Version 1</title>
+  <link rel='stylesheet' href='./style.min.css'>
+
+  <!--Font Awesome-->
+  <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css'
+    integrity='sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA=='
+    crossorigin='anonymous' />
+
+  <!--BloggerScript-->
+  <script src='../../../main/BloggerScript.min.js'></script>
+
+  <!--Main Script-->
+  <script src='./main.min.js'></script>
+</head>
+
+<body class='align'>
+  <div class='custom_post_v1'></div>
+  <script>
+    let feed = new BloggerScript();
+    feed.xhr2('https://mstream-clone.blogspot.com/feeds/posts/default/-/Series?alt=json-in-script&max-results=5', (
+      e) => {
+      let items = feed.getFeed(e);
+      bloggerHtml.custom_post_v1(items, document.querySelector('.custom_post_v1'));
+    });
+  </script>
+</body>
+
+</html>
