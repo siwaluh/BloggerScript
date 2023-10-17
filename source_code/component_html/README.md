@@ -38,4 +38,4 @@ if(element) {
   element.innerHTML = html;
 }
 ```
-Demo: [Click Disini](https://siwaluh.github.io/BloggerScript/component_html/custom_post_v1).
+Demo: [Click Disini](https://siwaluh.github.io/BloggerScript/source_code/component_html/custom_post_v1).
