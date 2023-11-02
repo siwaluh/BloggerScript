@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title>Custom Post V2</title>
+  <!--Main CSS-->
+  <link rel='stylesheet' href='./style.css'>
+
+  <!--BloggerScript-->
+  <script src='../../../main/BloggerScript.min.js'></script>
+
+  <!--MainScript-->
+  <script src='./main.js'></script>
+</head>
+<body class='align'>
+  <div class='custom_post_v2'></div>
+  <script>
+    let feed = new BloggerScript();
+    feed.xhr2('https://mstream-clone.blogspot.com/feeds/posts/default/-/Series?alt=json&max-results=10', (e) => {
+      let entry = feed.getFeed(e);
+      console.log(entry);
+    })
+  </script>
+</body>
+</html>
