@@ -22,7 +22,16 @@ class BloggerScript {
     if (!b) return e;
     let f = /\/(s|w|h)\d{1,4}-((w|s|h)(\d{1,4})+-)?(c{1,2}|p-k-no-nu|rw)/gi;
     let l = /\=(s|w|h)\d{1,4}-((w|s|h)(\d{1,4})+-)?(c{1,2}|p-k-no-nu|rw)/gi;
+    let k = /(\/(w|h|s)\d{1,4}\/)/gi,
+      x = /(\=(w|h|s)\d{1,4})$/gi;
     let val = /\-(rw)$/.test(b);
+    if (k.test(e)) {
+      e = e.replace(k, '/s72-c/');
+    }
+
+    if (x.test(e)) {
+      e = e.replace(x, '=s72-c');
+    }
     if (val) e = e.replace(/\.(gif|jpe?g|tiff?|png|bmp)$/, '.webp');
     return e.match(f) ? e.replace(f, `/${b}`) : e.match(l) ? e.replace(l, `=${b}`) : e;
   }
@@ -89,7 +98,37 @@ class BloggerScript {
     return (document.body || document.getElementsByTagName('body')[0]).appendChild(script);
   }
 
+  getId(e) {
+    return e.split('post-')[1];
+  }
+
+  getAuthor(e) {
+    let obj = {};
+    'name' in e && (obj['name'] = e.name.$t);
+    'uri' in e && (obj['uri'] = e.uri.$t);
+    if ('gd$image' in e && 'src' in e.gd$image && e.gd$image.src.indexOf('https://img1.blogblog.com/') == -1) {
+      obj['image'] = this.resizeImage(e.gd$image.src, this._config.sizeImage);
+    } else {
+      obj['image'] = this._config.noImage ? this.resizeImage(this._config.noImage, this._config.sizeImage) : '';
+    }
+    return obj;
+  }
+
+  getDefault(e) {
+    let a = ['published', 'updated', 'content', 'summary', 'title'],
+      b = {};
+    a.forEach(i => {
+      if (i in e) {
+        b[i] = e[i]['$t'];
+        if (i == 'published')
+          b['date'] = this.getTime(e[i]['$t']);
+      }
+    });
+    return b;
+  }
+
   getImage(e) {
+    let noImage = this._config.noImage ? this.resizeImage(this._config.noImage, this._config.sizeImage) : '';
     if ('media$thumbnail' in e) {
       return this.resizeImage(e.media$thumbnail.url, this._config.sizeImage);
     } else {
@@ -102,10 +141,10 @@ class BloggerScript {
         if ((a != -1) && (b != -1) && (c != -1) && (d != "")) {
           return d;
         } else {
-          return this._config.noImage || '';
+          return noImage;
         }
       } else {
-        return this._config.noImage || '';
+        return noImage;
       }
     }
   }
@@ -127,18 +166,12 @@ class BloggerScript {
     if (e.feed && e.feed.entry) {
       for (let i = 0; i < e.feed.entry.length; i++) {
         const item = e.feed.entry[i];
-        let obj = {};
-        obj['id'] = item.id.$t;
-        obj['title'] = item.title.$t;
+        let obj = this.getDefault(item);
+        obj['id'] = this.getId(item.id.$t);
         obj['link'] = item.link.find(k => k.rel == 'alternate').href;
         obj['image'] = this.getImage(item);
         obj['label'] = item.category.map(k => k.term);
-        obj['date'] = this.getTime(item.published.$t);
-        obj['published'] = item.published.$t;
-        obj['updated'] = item.updated.$t;
-        'summary' in item && (obj['summary'] = item.summary.$t);
-        'content' in item && (obj['content'] = item.content.$t);
-        'author' in item && (obj['author'] = item.author[0]);
+        'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
         arr.push(obj);
       }
     }
@@ -291,3 +324,35 @@ class BloggerSitemap extends BloggerScript {
     this[type](newUrl, newCallback);
   }
 };
+
+class BloggerComments extends BloggerScript {
+  constructor(e) {
+    super(e);
+  }
+
+  getComments(e) {
+    let arr = new Array;
+    if (e.feed && e.feed.entry) {
+      for (let index = 0; index < e.feed.entry.length; index++) {
+        const item = e.feed.entry[index];
+        let obj = this.getDefault(item);
+        obj['id'] = this.getId(item['id']['$t']);
+        obj['link'] = item.link.find(k => 'alternate' == k.rel).href;
+        'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
+        arr.push(obj);
+      }
+    }
+    return arr;
+  }
+
+  run(id, jumlahComments, callback, ex) {
+    let xhr = !ex ? 'xhr2' : 'xhr',
+      uri = this._config.mainUrl || '',
+      contentType = this._config.contentType || 'default',
+      postId = id ? `/${id}/` : '/';
+    this[xhr](`${uri}/feeds${postId}comments/${contentType}?alt=json&max-results=${jumlahComments}`, (e) => {
+      let entry = this.getComments(e);
+      callback(entry);
+    });
+  }
+}

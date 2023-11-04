@@ -152,7 +152,15 @@ var BloggerScript = /*#__PURE__*/ function () {
       if (!b) return e;
       var f = /\/(s|w|h)\d{1,4}-((w|s|h)(\d{1,4})+-)?(c{1,2}|p-k-no-nu|rw)/gi;
       var l = /\=(s|w|h)\d{1,4}-((w|s|h)(\d{1,4})+-)?(c{1,2}|p-k-no-nu|rw)/gi;
+      var k = /(\/(w|h|s)\d{1,4}\/)/gi,
+        x = /(\=(w|h|s)\d{1,4})$/gi;
       var val = /\-(rw)$/.test(b);
+      if (k.test(e)) {
+        e = e.replace(k, '/s72-c/');
+      }
+      if (x.test(e)) {
+        e = e.replace(x, '=s72-c');
+      }
       if (val) e = e.replace(/\.(gif|jpe?g|tiff?|png|bmp)$/, '.webp');
       return e.match(f) ? e.replace(f, "/".concat(b)) : e.match(l) ? e.replace(l, "=".concat(b)) : e;
     }
@@ -229,8 +237,41 @@ var BloggerScript = /*#__PURE__*/ function () {
       return (document.body || document.getElementsByTagName('body')[0]).appendChild(script);
     }
   }, {
+    key: "getId",
+    value: function getId(e) {
+      return e.split('post-')[1];
+    }
+  }, {
+    key: "getAuthor",
+    value: function getAuthor(e) {
+      var obj = {};
+      'name' in e && (obj['name'] = e.name.$t);
+      'uri' in e && (obj['uri'] = e.uri.$t);
+      if ('gd$image' in e && 'src' in e.gd$image && e.gd$image.src.indexOf('https://img1.blogblog.com/') == -1) {
+        obj['image'] = this.resizeImage(e.gd$image.src, this._config.sizeImage);
+      } else {
+        obj['image'] = this._config.noImage ? this.resizeImage(this._config.noImage, this._config.sizeImage) : '';
+      }
+      return obj;
+    }
+  }, {
+    key: "getDefault",
+    value: function getDefault(e) {
+      var _this2 = this;
+      var a = ['published', 'updated', 'content', 'summary', 'title'],
+        b = {};
+      a.forEach(function (i) {
+        if (i in e) {
+          b[i] = e[i]['$t'];
+          if (i == 'published') b['date'] = _this2.getTime(e[i]['$t']);
+        }
+      });
+      return b;
+    }
+  }, {
     key: "getImage",
     value: function getImage(e) {
+      var noImage = this._config.noImage ? this.resizeImage(this._config.noImage, this._config.sizeImage) : '';
       if ('media$thumbnail' in e) {
         return this.resizeImage(e.media$thumbnail.url, this._config.sizeImage);
       } else {
@@ -243,10 +284,10 @@ var BloggerScript = /*#__PURE__*/ function () {
           if (a != -1 && b != -1 && c != -1 && d != "") {
             return d;
           } else {
-            return this._config.noImage || '';
+            return noImage;
           }
         } else {
-          return this._config.noImage || '';
+          return noImage;
         }
       }
     }
@@ -270,9 +311,8 @@ var BloggerScript = /*#__PURE__*/ function () {
       if (e.feed && e.feed.entry) {
         for (var i = 0; i < e.feed.entry.length; i++) {
           var item = e.feed.entry[i];
-          var obj = {};
-          obj['id'] = item.id.$t;
-          obj['title'] = item.title.$t;
+          var obj = this.getDefault(item);
+          obj['id'] = this.getId(item.id.$t);
           obj['link'] = item.link.find(function (k) {
             return k.rel == 'alternate';
           }).href;
@@ -280,12 +320,7 @@ var BloggerScript = /*#__PURE__*/ function () {
           obj['label'] = item.category.map(function (k) {
             return k.term;
           });
-          obj['date'] = this.getTime(item.published.$t);
-          obj['published'] = item.published.$t;
-          obj['updated'] = item.updated.$t;
-          'summary' in item && (obj['summary'] = item.summary.$t);
-          'content' in item && (obj['content'] = item.content.$t);
-          'author' in item && (obj['author'] = item.author[0]);
+          'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
           arr.push(obj);
         }
       }
@@ -401,16 +436,16 @@ var BloggerSitemap = /*#__PURE__*/ function (_BloggerScript3) {
   var _super3 = _createSuper(BloggerSitemap);
 
   function BloggerSitemap(mainScript) {
-    var _this2;
+    var _this3;
     _classCallCheck(this, BloggerSitemap);
-    _this2 = _super3.call(this, mainScript);
-    _this2._settings = {
+    _this3 = _super3.call(this, mainScript);
+    _this3._settings = {
       'start-index': 1,
       'max-results': 150,
       'total-get': 0,
       'posts': new Array()
     };
-    return _this2;
+    return _this3;
   }
   _createClass(BloggerSitemap, [{
     key: "alphaSort",
@@ -441,7 +476,7 @@ var BloggerSitemap = /*#__PURE__*/ function (_BloggerScript3) {
   }, {
     key: "run",
     value: function run(url) {
-      var _this3 = this;
+      var _this4 = this;
       var callback = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.err;
       var check = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var settings = this._settings,
@@ -451,11 +486,11 @@ var BloggerSitemap = /*#__PURE__*/ function (_BloggerScript3) {
         newCallback = function newCallback(feeds) {
           if ('entry' in feeds.feed) {
             var index = feeds.feed.openSearch$totalResults.$t || 0;
-            Array.prototype.push.apply(settings['posts'], _this3.getFeed(feeds));
+            Array.prototype.push.apply(settings['posts'], _this4.getFeed(feeds));
             if (feeds.feed.entry.length >= settings['max-results']) {
               settings['start-index'] += settings['max-results'];
               if (config['firstContent'] && settings['total-get'] == 1) callback(settings['posts'], settings['total-get'], false, index);
-              _this3.run(url, callback, check);
+              _this4.run(url, callback, check);
             } else {
               callback(settings['posts'], settings['total-get'], true, index);
             }
@@ -470,3 +505,45 @@ var BloggerSitemap = /*#__PURE__*/ function (_BloggerScript3) {
   }]);
   return BloggerSitemap;
 }(BloggerScript);;
+var BloggerComments = /*#__PURE__*/ function (_BloggerScript4) {
+  _inherits(BloggerComments, _BloggerScript4);
+  var _super4 = _createSuper(BloggerComments);
+
+  function BloggerComments(e) {
+    _classCallCheck(this, BloggerComments);
+    return _super4.call(this, e);
+  }
+  _createClass(BloggerComments, [{
+    key: "getComments",
+    value: function getComments(e) {
+      var arr = new Array();
+      if (e.feed && e.feed.entry) {
+        for (var index = 0; index < e.feed.entry.length; index++) {
+          var item = e.feed.entry[index];
+          var obj = this.getDefault(item);
+          obj['id'] = this.getId(item['id']['$t']);
+          obj['link'] = item.link.find(function (k) {
+            return 'alternate' == k.rel;
+          }).href;
+          'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
+          arr.push(obj);
+        }
+      }
+      return arr;
+    }
+  }, {
+    key: "run",
+    value: function run(id, jumlahComments, callback, ex) {
+      var _this5 = this;
+      var xhr = !ex ? 'xhr2' : 'xhr',
+        uri = this._config.mainUrl || '',
+        contentType = this._config.contentType || 'default',
+        postId = id ? "/".concat(id, "/") : '/';
+      this[xhr]("".concat(uri, "/feeds").concat(postId, "comments/").concat(contentType, "?alt=json&max-results=").concat(jumlahComments), function (e) {
+        var entry = _this5.getComments(e);
+        callback(entry);
+      });
+    }
+  }]);
+  return BloggerComments;
+}(BloggerScript);
