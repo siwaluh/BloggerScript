@@ -533,8 +533,9 @@ var BloggerComments = /*#__PURE__*/ function (_BloggerScript4) {
     }
   }, {
     key: "run",
-    value: function run(id, jumlahComments, callback, ex) {
+    value: function run(id, jumlahComments, callback) {
       var _this5 = this;
+      var ex = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
       var xhr = !ex ? 'xhr2' : 'xhr',
         uri = this._config.mainUrl || '',
         contentType = this._config.contentType || 'default',

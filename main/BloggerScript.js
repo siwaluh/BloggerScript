@@ -345,7 +345,7 @@ class BloggerComments extends BloggerScript {
     return arr;
   }
 
-  run(id, jumlahComments, callback, ex) {
+  run(id, jumlahComments, callback, ex = true) {
     let xhr = !ex ? 'xhr2' : 'xhr',
       uri = this._config.mainUrl || '',
       contentType = this._config.contentType || 'default',
