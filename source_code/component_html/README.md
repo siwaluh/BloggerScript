@@ -6,7 +6,7 @@ Buatlah element dengan class bernama `custom_post_v1`.
 ```
 <div class='custom_post_v1'></div>
 ```
-Selanjut nya buat tambahkan BloggerScript untuk mengambil daftar postingan.
+Selanjut nya tambahkan BloggerScript untuk mengambil daftar postingan.
 ```
 let getPosts = new BloggerScript();
 getPosts.xhr('https://nama.blogspot.com/feeds/posts/default?alt=json-in-script&max-results=5', (posts) => {
