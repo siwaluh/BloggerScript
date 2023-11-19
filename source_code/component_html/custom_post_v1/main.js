@@ -40,7 +40,7 @@
           html += `<div class='cp1_epxs'>${chapter}</div>`;
 
         if (score)
-          html += `<div class='cp1_rt'><div class='cp1_rating'><div class='cp1_rating-prc'><div class='cp1_rtp'><div class='cp1_rtb'><span style='width:${score.replace(/./g, '').slice(0, 2)}%;'></span></div></div></div><div class='cp1_numscore'>${score}</div></div></div>`;
+          html += `<div class='cp1_rt'><div class='cp1_rating'><div class='cp1_rating-prc'><div class='cp1_rtp'><div class='cp1_rtb'><span style='width:${score.replace(/\./g, '').slice(0, 2)}%;'></span></div></div></div><div class='cp1_numscore'>${score}</div></div></div>`;
 
         html += `</div></div></a></div></div>`;
       };
