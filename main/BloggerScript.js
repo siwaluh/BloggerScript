@@ -172,6 +172,7 @@ class BloggerScript {
         obj['image'] = this.getImage(item);
         obj['label'] = item.category.map(k => k.term);
         'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
+        obj['comments_count'] = item.thr$total.$t;
         arr.push(obj);
       }
     }
