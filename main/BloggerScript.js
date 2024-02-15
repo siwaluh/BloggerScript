@@ -338,6 +338,7 @@ class BloggerComments extends BloggerScript {
         const item = e.feed.entry[index];
         let obj = this.getDefault(item);
         obj['id'] = this.getId(item['id']['$t']);
+        'thr$in-reply-to' in obj && (this.getId(item['thr$in-reply-to']['ref']));
         obj['link'] = item.link.find(k => 'alternate' == k.rel).href;
         'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
         arr.push(obj);
