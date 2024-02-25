@@ -338,7 +338,8 @@ class BloggerComments extends BloggerScript {
         const item = e.feed.entry[index];
         let obj = this.getDefault(item);
         obj['id'] = this.getId(item['id']['$t']);
-        'thr$in-reply-to' in obj && (this.getId(item['thr$in-reply-to']['ref']));
+        'thr$in-reply-to' in item && (obj['post-id'] = this.getId(item['thr$in-reply-to']['ref']));
+        'thr$in-reply-to' in item && (obj['post-source'] = item['thr$in-reply-to']['source'].replace('http://', 'https://'));
         obj['link'] = item.link.find(k => 'alternate' == k.rel).href;
         'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
         arr.push(obj);
@@ -346,6 +347,55 @@ class BloggerComments extends BloggerScript {
     }
     return arr;
   }
+
+  getPostInfo(array, callback, ex = true) {
+    if (array.length != 0) {
+      let x = 0,
+        newArr = {
+          item: []
+        },
+        xhr = !ex ? 'xhr2' : 'xhr';
+      array.forEach((item) => {
+        if ('post-id' in item && 'post-source' in item) {
+
+          new Promise(r => {
+            if (item['post-id'] in newArr) {
+              x++;
+              r();
+            } else {
+              newArr[`${item['post-id']}`] = 'loading';
+              this[xhr](`${item['post-source']}?alt=json-in-script`, (e) => {
+                let c;
+                if (e && 'entry' in e) {
+                  c = {
+                    'title': e['entry']['title']['$t'],
+                    'label': e['entry']['category'].map(k => k.term),
+                    'comments_count': e['entry']['thr$total']['$t']
+                  };
+                } else
+                  c = false;
+                newArr[`${item['post-id']}`] = c;
+                item['post-title'] = c;
+                x++;
+                r();
+              })
+            }
+          }).then(() => {
+            if (x == array.length) {
+              let l = array.map(k => {
+                k['post-info'] = newArr[`${k['post-id']}`];
+                return k;
+              });
+              callback(l);
+            }
+          })
+        }
+      })
+    } else
+      callback([]);
+  }
+
+
 
   run(id, jumlahComments, callback, ex = true) {
     let xhr = !ex ? 'xhr2' : 'xhr',
