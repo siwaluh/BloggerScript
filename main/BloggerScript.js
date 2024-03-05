@@ -257,8 +257,10 @@ class BloggerRandom extends BloggerScript {
     let index = e.feed.openSearch$totalResults.$t,
       jumlah = this.config['jumlah'];
     if (jumlah) {
-      if (index < jumlah) return false;
-      index = this.shuffle2(1, (index - jumlah));
+      if (index < jumlah)
+        index = 1;
+      else
+        index = this.shuffle2(1, (index - jumlah));
     } else {
       index = index <= 150 ? 1 : this.shuffle2(1, (index - 150));
       jumlah = 150;
@@ -286,8 +288,13 @@ class BloggerRandom extends BloggerScript {
 
     this[xhr](url, (entry) => {
       let url = this.getTotalResults(entry);
-      if (url == false)
+      if (url == false) {
+        this.config = {
+          'max-results': 0,
+          'start-index': 1
+        };
         return (callback || this.err)([]);
+      }
       this[xhr](url, (entry) => {
         this.config = {
           'max-results': 0,
