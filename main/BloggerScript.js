@@ -286,6 +286,8 @@ class BloggerRandom extends BloggerScript {
 
     this[xhr](url, (entry) => {
       let url = this.getTotalResults(entry);
+      if (url == false)
+        return (callback || this.err)([]);
       this[xhr](url, (entry) => {
         this.config = {
           'max-results': 0,
@@ -501,7 +503,7 @@ class BloggerComments extends BloggerScript {
           });
         }
       }
-    } else (callback || this.err)(array);
+    } else(callback || this.err)(array);
   }
 
   run(callback) {
