@@ -1,6 +1,6 @@
 class BloggerScript {
-  constructor(obj = {}) {
-    this._config = obj;
+  constructor(obj) {
+    this.config = obj || {};
   }
 
   err(e) {
@@ -16,6 +16,31 @@ class BloggerScript {
       result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
+  }
+
+  createURL() {
+    let q = this.config,
+      url = document.location.protocol + '//' + q.host + '/feeds/';
+
+    if (typeof q.type == 'object') {
+      if (q.type.name == 'comments')
+        url += q.type.id + '/' + q.type.name + '/' + q.feed;
+      else
+        url += q.type.name + '/' + q.feed + '/' + q.type.id;
+    } else
+      url += q.type + '/' + q.feed;
+
+    if (q.label != false && typeof q.type != 'object')
+      url += '/-/' + q.label;
+    url = new URL(url);
+    ['q', 'category', 'start-index', 'max-results', 'orderby', 'alt'].forEach(item => {
+      if (q[item] != false && typeof q.type != 'object')
+        url.searchParams.set(item, q[item]);
+      else if (typeof q.type == 'object' && item == 'alt')
+        url.searchParams.set(item, q[item]);
+    });
+    return url;
+
   }
 
   resizeImage(e, b = false) {
@@ -39,7 +64,7 @@ class BloggerScript {
   shuffle(a) {
     var b = a.length,
       c, d;
-    if (b === 0) return false;
+    if (b === 0) return [];
     while (--b) {
       c = Math.floor(Math.random() * (b + 1));
       d = a[b];
@@ -96,6 +121,39 @@ class BloggerScript {
     };
     script.async = true;
     return (document.body || document.getElementsByTagName('body')[0]).appendChild(script);
+  }
+
+  getXHRtype(url) {
+    return new URL(url).hostname == document.location.hostname ? 'xhr' : 'xhr2'
+  }
+
+  get config() {
+    return this._config;
+  }
+
+  set config(obj) {
+    if (!('_config' in this))
+      this._config = {
+        'host': document.location.hostname,
+        'feed': 'default',
+        'type': 'posts',
+        'alt': 'json-in-script',
+        'max-results': 10,
+        'start-index': 1,
+        'category': false,
+        'label': false,
+        'q': false,
+        'orderby': 'published'
+      };
+
+    for (const key in obj) {
+      if (Object.hasOwnProperty.call(obj, key)) {
+        if ('jumlah' == key)
+          this._config['max-results'] = obj[key], this._config[key] = obj[key];
+        else
+          this._config[key] = obj[key];
+      }
+    }
   }
 
   getId(e) {
@@ -162,32 +220,42 @@ class BloggerScript {
   }
 
   getFeed(e) {
-    let arr = new Array;
-    if (e.feed && e.feed.entry) {
-      for (let i = 0; i < e.feed.entry.length; i++) {
-        const item = e.feed.entry[i];
+    let arr = new Array,
+      entry = (e.feed && e.feed.entry) || (e.entry && [e.entry]) || false;
+    if (entry) {
+      for (let i = 0; i < entry.length; i++) {
+        const item = entry[i];
         let obj = this.getDefault(item);
         obj['id'] = this.getId(item.id.$t);
         obj['link'] = item.link.find(k => k.rel == 'alternate').href;
         obj['image'] = this.getImage(item);
-        obj['label'] = item.category.map(k => k.term);
+        'category' in item && (obj['label'] = item.category.map(k => k.term));
         'author' in item && (obj['author'] = this.getAuthor(item.author[0]));
-        obj['comments_count'] = item.thr$total.$t;
+        'thr$total' in item && (obj['comments_count'] = item.thr$total.$t);
         arr.push(obj);
       }
     }
     return arr;
+  }
+
+  run(callback) {
+    let url = this.createURL().href,
+      xhr = this.getXHRtype(url);
+    this[xhr](url, (e) => (callback || this.err)(this.getFeed(e)));
   }
 };
 
 class BloggerRandom extends BloggerScript {
   constructor(mainScript = {}) {
     super(mainScript);
+    this.config = {
+      'max-results': 0
+    };
   }
 
   getTotalResults(e) {
     let index = e.feed.openSearch$totalResults.$t,
-      jumlah = this._config.jumlah;
+      jumlah = this.config['jumlah'];
     if (jumlah) {
       if (index < jumlah) return false;
       index = this.shuffle2(1, (index - jumlah));
@@ -195,10 +263,12 @@ class BloggerRandom extends BloggerScript {
       index = index <= 150 ? 1 : this.shuffle2(1, (index - 150));
       jumlah = 150;
     }
-    return {
-      'start-index': index,
-      'max-results': jumlah
-    }
+
+    this.config = {
+      'max-results': jumlah,
+      'start-index': index
+    };
+    return this.createURL().href;
   }
 
   getItems(e) {
@@ -210,15 +280,20 @@ class BloggerRandom extends BloggerScript {
     return [];
   }
 
-  run(d, e = this.err, c = true) {
-    let _this = this,
-      type = c ? 'xhr' : 'xhr2';
-    _this[type](`${d}?alt=json-in-script&max-results=0`, (v) => {
-      let index = _this.getTotalResults(v);
-      _this[type](`${d}?alt=json-in-script&start-index=${index['start-index']}&max-results=${index['max-results']}`, (s) => {
-        e(_this.getItems(s));
-      })
-    })
+  run(callback) {
+    let url = this.createURL().href,
+      xhr = this.getXHRtype(url);
+
+    this[xhr](url, (entry) => {
+      let url = this.getTotalResults(entry);
+      this[xhr](url, (entry) => {
+        this.config = {
+          'max-results': 0,
+          'start-index': 1
+        };
+        (callback || this.err)(this.getItems(entry));
+      });
+    });
   }
 };
 
@@ -227,51 +302,50 @@ class BloggerRelated extends BloggerScript {
     super(mainScript);
   }
 
-  run(url, e = this.err, c = true) {
-    let _this = this,
-      j = 0,
-      doc = document.location.pathname,
-      labels = _this._config.labels,
-      jumlah = _this._config.jumlah,
-      type = c ? 'xhr' : 'xhr2';
-    _this._config.arr = new Array;
+  run(callback) {
+    let i = 0,
+      path = document.location.pathname,
+      labels = this.config.label,
+      jumlah = this.config.jumlah,
+      arr = new Array;
 
-    if (labels != 'undefined' && labels != '' && labels['length'] != 0) {
-      labels.forEach((item) => {
-        _this[type](`${url}/-/${item}?alt=json-in-script&max-results=${jumlah}`, (entry) => {
-          let feed = _this.getFeed(entry);
-          feed.forEach(post => {
-            if (!(_this._config.arr.some(l => l.id == post.id)))
-              _this._config.arr.push(post);
-          });
+    if (typeof labels == 'object') {
+      labels.forEach((item, index, items) => {
+        this._config['label'] = item;
+        let url = this.createURL().href,
+          xhr = this.getXHRtype(url);
 
-          j++;
-          if (j == labels.length) {
-            if (_this._config.arr.length == 0) return e([]);
+        this[xhr](url, (entry) => {
+          let feed = this.getFeed(entry);
 
-            let indexItem = _this._config.arr.map(k => (new URL(k.link).pathname == doc)).indexOf(true);
-            _this._config.arr.splice(indexItem, 1);
+          feed.forEach(item => !arr.some(l => l.id == item.id) && arr.push(item));
 
-            let arr = _this.shuffle(_this._config.arr).slice(0, jumlah);
-            return e(arr);
-          };
+          i++;
+          if (i == items.length) {
+            let spltIndx = arr.map(k => (new URL(k.link).pathname == path)).indexOf(true);
+            arr.splice(spltIndx, 1);
+            arr = this.shuffle(arr).slice(0, jumlah);
+            (callback || this.err)(arr);
+          }
         });
       });
-    } else {
-      return e([]);
-    }
+    } else if (typeof labels == 'string') {
+      let url = this.createURL().href,
+        xhr = this.getXHRtype(url);
+      this[xhr](url, entry => {
+        (callback || this.err)(this.getFeed(entry));
+      })
+    } else(callback || this.err)([]);
   }
 };
 
 class BloggerSitemap extends BloggerScript {
   constructor(mainScript) {
     super(mainScript);
-    this._settings = {
-      'start-index': 1,
-      'max-results': 150,
-      'total-get': 0,
-      'posts': new Array
-    };
+    this.config = {
+      'max-results': 20,
+      'total-get': 0
+    }
   }
 
   alphaSort(array) {
@@ -300,35 +374,72 @@ class BloggerSitemap extends BloggerScript {
     return array2;
   }
 
-  run(url, callback = this.err, check = true) {
-    const settings = this._settings,
-      config = this._config,
-      order = config.order || 'updated',
-      newUrl = `${url}?alt=json-in-script&start-index=${settings['start-index']}&max-results=${settings['max-results']}&orderby=${order}`,
-      newCallback = (feeds) => {
-        if ('entry' in feeds.feed) {
-          let index = (feeds.feed.openSearch$totalResults.$t || 0);
-          Array.prototype.push.apply(settings['posts'], this.getFeed(feeds));
-          if (feeds.feed.entry.length >= settings['max-results']) {
-            settings['start-index'] += settings['max-results'];
-            if (config['firstContent'] && settings['total-get'] == 1) callback(settings['posts'], settings['total-get'], false, index);
-            this.run(url, callback, check);
-          } else {
-            callback(settings['posts'], settings['total-get'], true, index);
-          }
-        } else {
-          callback(settings['posts'], settings['total-get'], true, settings['posts'].length);
+  get posts() {
+    return this._posts;
+  }
+
+  set posts(array) {
+    if (!('_posts' in this))
+      this._posts = new Array;
+    Array.prototype.push.apply(this._posts, array);
+  }
+
+  run(callback) {
+    let url = this.createURL().href,
+      xhr = this.getXHRtype(url),
+      x = () => {
+        this.config = {
+          'max-results': 150,
+          'start-index': 1,
+          'total-get': 0
         }
-      },
-      type = check ? 'xhr' : 'xhr2';
-    settings['total-get']++;
-    this[type](newUrl, newCallback);
+      };
+
+    this.config['total-get']++;
+    this[xhr](url, (feeds) => {
+      if (feeds && feeds.feed && feeds.feed.entry) {
+        let ix = feeds.feed.openSearch$totalResults.$t || 0,
+          entry = feeds.feed.entry;
+        this.posts = this.getFeed(feeds)
+        if (entry.length >= this.config['max-results']) {
+          this.config['start-index'] += this.config['max-results'];
+
+          if (this.config['firstContent'] && this.config['total-get'] == 1)
+            (callback || this.err)({
+              'totalPosts': ix,
+              'posts': this.posts,
+              'completed': false
+            });
+
+          this.run((callback || this.err));
+        } else {
+          (callback || this.err)({
+            'totalPosts': ix,
+            'totalGet': this.config['total-get'],
+            'posts': this.posts,
+            'completed': true
+          }), x()
+        }
+      } else {
+        (callback || this.err)({
+          'totalPosts': this.posts.length,
+          'totalGet': this.config['total-get'],
+          'posts': this.posts,
+          'completed': true
+        }), x()
+      }
+    });
+
   }
 };
 
 class BloggerComments extends BloggerScript {
   constructor(e) {
     super(e);
+    this.config = {
+      'type': (this.config.type != 'comments' && this.config.type.name != 'comments') ? 'comments' : this.config.type,
+      'max-results': this.config.jumlah ? this.config.jumlah : 500
+    }
   }
 
   getComments(e) {
@@ -348,63 +459,54 @@ class BloggerComments extends BloggerScript {
     return arr;
   }
 
-  getPostInfo(array, callback, ex = true) {
+  getPostInfo(array, callback) {
     if (array.length != 0) {
       let x = 0,
-        newArr = {
-          item: []
-        },
-        xhr = !ex ? 'xhr2' : 'xhr';
-      array.forEach((item) => {
-        if ('post-id' in item && 'post-source' in item) {
+        z = 0,
+        w = this.config.type,
+        y = this.config.feed,
+        arr = new Array;
 
-          new Promise(r => {
-            if (item['post-id'] in newArr) {
-              x++;
-              r();
-            } else {
-              newArr[`${item['post-id']}`] = 'loading';
-              this[xhr](`${item['post-source']}?alt=json-in-script`, (e) => {
-                let c;
-                if (e && 'entry' in e) {
-                  c = {
-                    'title': e['entry']['title']['$t'],
-                    'label': e['entry']['category'].map(k => k.term),
-                    'comments_count': e['entry']['thr$total']['$t']
-                  };
-                } else
-                  c = false;
-                newArr[`${item['post-id']}`] = c;
-                item['post-title'] = c;
-                x++;
-                r();
-              })
-            }
-          }).then(() => {
-            if (x == array.length) {
-              let l = array.map(k => {
-                k['post-info'] = newArr[`${k['post-id']}`];
-                return k;
+      array.forEach(item => 'post-id' in item && 'post-source' in item && !(item['post-id'] in arr) && (arr[item['post-id']] = true, x++));
+
+      for (const key in arr) {
+        if (Object.hasOwnProperty.call(arr, key)) {
+          this.config = {
+            'type': {
+              'name': 'posts',
+              'id': key
+            },
+            'feed': 'summary'
+          };
+          let url = this.createURL().href,
+            xhr = this.getXHRtype(url);
+          this[xhr](url, (entry) => {
+            if (entry && 'entry' in entry)
+              arr[key] = this.getFeed(entry);
+            z++
+            if (z == x) {
+              array = array.map(item => {
+                if ('post-id' in item)
+                  item['post-info'] = arr[item['post-id']][0] || false;
+                else
+                  item['post-info'] = false;
+                return item;
               });
-              callback(l);
+              this.config = {
+                'type': w,
+                'feed': y
+              };
+              (callback || this.err)(array);
             }
-          })
+          });
         }
-      })
-    } else
-      callback([]);
+      }
+    } else (callback || this.err)(array);
   }
 
-
-
-  run(id, jumlahComments, callback, ex = true) {
-    let xhr = !ex ? 'xhr2' : 'xhr',
-      uri = this._config.mainUrl || '',
-      contentType = this._config.contentType || 'default',
-      postId = id ? `/${id}/` : '/';
-    this[xhr](`${uri}/feeds${postId}comments/${contentType}?alt=json&max-results=${jumlahComments}`, (e) => {
-      let entry = this.getComments(e);
-      callback(entry);
-    });
+  run(callback) {
+    let url = this.createURL().href,
+      xhr = this.getXHRtype(url);
+    this[xhr](url, (entry) => (callback || this.err)(this.getComments(entry)));
   }
 }
