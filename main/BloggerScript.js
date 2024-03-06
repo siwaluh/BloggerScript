@@ -38,6 +38,8 @@ class BloggerScript {
         url.searchParams.set(item, q[item]);
       else if (typeof q.type == 'object' && item == 'alt')
         url.searchParams.set(item, q[item]);
+      else if (typeof q.type == 'object' && q.type.name == 'comments' && (item == 'start-index' || item == 'max-results'))
+        url.searchParams.set(item, q[item]);
     });
     return url;
 
