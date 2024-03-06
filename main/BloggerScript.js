@@ -352,9 +352,10 @@ class BloggerSitemap extends BloggerScript {
   constructor(mainScript) {
     super(mainScript);
     this.config = {
-      'max-results': 20,
+      'max-results': 150,
       'total-get': 0
     }
+    this.posts = [];
   }
 
   alphaSort(array) {
@@ -393,6 +394,11 @@ class BloggerSitemap extends BloggerScript {
     Array.prototype.push.apply(this._posts, array);
   }
 
+  resetPosts() {
+    if ('_posts' in this)
+      this._posts = new Array;
+  }
+
   run(callback) {
     let url = this.createURL().href,
       xhr = this.getXHRtype(url),
@@ -401,7 +407,8 @@ class BloggerSitemap extends BloggerScript {
           'max-results': 150,
           'start-index': 1,
           'total-get': 0
-        }
+        };
+        this.resetPosts();
       };
 
     this.config['total-get']++;
@@ -518,4 +525,4 @@ class BloggerComments extends BloggerScript {
       xhr = this.getXHRtype(url);
     this[xhr](url, (entry) => (callback || this.err)(this.getComments(entry)));
   }
-}
+};
