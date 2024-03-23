@@ -159,7 +159,7 @@ class BloggerScript {
   }
 
   getId(e) {
-    return e.split('post-')[1];
+    return e.split('post-')[1] || e.split('page-')[1];
   }
 
   getAuthor(e) {
