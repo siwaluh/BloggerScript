@@ -11,7 +11,12 @@ let postSitemap = new BloggerSitemap({
   createNavigation,
   navigationElement;
 
-postSitemap.run((entry, totalGet, isLast, totalResults) => {
+postSitemap.run(({
+  posts: entry,
+  totalGet,
+  completed: isLast,
+  totalPosts: totalResults
+}) => {
   if (totalGet == 1 && entry.length != 0) {
     let firstPosts = entry.slice(0, maxResults);
 
@@ -23,7 +28,7 @@ postSitemap.run((entry, totalGet, isLast, totalResults) => {
       'callback': function (mainElement, currentPage) {
         if (mainElement.innerHTML == '')
           return;
-        
+
         if (postSitemapPaginationArr || currentPage == 1) {
 
           //Remove Pagination Element
