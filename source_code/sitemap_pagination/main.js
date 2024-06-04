@@ -1,5 +1,7 @@
 let postSitemap = new BloggerSitemap({
-    'firstContent': true
+    'firstContent': true,
+    'host': 'komikav-clone.blogspot.com',
+    'label': 'Series'
   }),
   sitemapElement = document.getElementById('sitemap_navigation'),
   customPostElement = document.getElementById('custom_post_v1'),
@@ -9,7 +11,7 @@ let postSitemap = new BloggerSitemap({
   createNavigation,
   navigationElement;
 
-postSitemap.run('https://mstream-clone.blogspot.com/feeds/posts/default/-/Series', (entry, totalGet, isLast, totalResults) => {
+postSitemap.run((entry, totalGet, isLast, totalResults) => {
   if (totalGet == 1 && entry.length != 0) {
     let firstPosts = entry.slice(0, maxResults);
 
