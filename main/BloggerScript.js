@@ -485,13 +485,16 @@ class BloggerComments extends BloggerScript {
         y = this.config.feed,
         arr = new Array;
 
-      array.forEach(item => 'post-id' in item && 'post-source' in item && !(item['post-id'] in arr) && (arr[item['post-id']] = true, x++));
+      array.forEach(item => 'post-id' in item && 'post-source' in item && !(item['post-id'] in arr) && (arr[item['post-id']] = {
+        'check': true,
+        'type': /\/p\//.test(item['link']) ? 'pages' : 'posts'
+      }, x++));
 
       for (const key in arr) {
         if (Object.hasOwnProperty.call(arr, key)) {
           this.config = {
             'type': {
-              'name': 'posts',
+              'name': arr[key].type,
               'id': key
             },
             'feed': 'summary'
