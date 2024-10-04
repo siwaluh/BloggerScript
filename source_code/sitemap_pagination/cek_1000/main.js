@@ -17,7 +17,7 @@ postSitemap.run(({
   completed: isLast,
   totalPosts: totalResults
 }) => {
-  if (!totalGet && entry.length != 0) {
+  if ((!totalGet || totalGet == 1) && entry.length != 0) {
     let firstPosts = entry.slice(0, maxResults);
 
     //Create Custom Post
