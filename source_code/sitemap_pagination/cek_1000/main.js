@@ -1,7 +1,7 @@
 let postSitemap = new BloggerSitemap({
   'firstContent': true,
-  'host': 'Reincarnation Of The Strongest Sword God',
-  'label': 'Series'
+  'host': 'www.novelturk.com',
+  'label': 'Reincarnation Of The Strongest Sword God'
 }),
 sitemapElement = document.getElementById('sitemap_navigation'),
 customPostElement = document.getElementById('custom_post_v1'),
