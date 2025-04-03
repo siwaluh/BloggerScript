@@ -264,8 +264,8 @@ class BloggerRandom extends BloggerScript {
       else
         index = this.shuffle2(1, (index - jumlah));
     } else {
-      index = index <= 150 ? 1 : this.shuffle2(1, (index - 150));
-      jumlah = 150;
+      index = index <= 100 ? 1 : this.shuffle2(1, (index - 100));
+      jumlah = 100;
     }
 
     this.config = {
@@ -354,7 +354,7 @@ class BloggerSitemap extends BloggerScript {
   constructor(mainScript) {
     super(mainScript);
     this.config = {
-      'max-results': 150,
+      'max-results': 100,
       'total-get': 0
     }
     this.posts = [];
@@ -401,53 +401,69 @@ class BloggerSitemap extends BloggerScript {
       this._posts = new Array;
   }
 
-  run(callback) {
-    let url = this.createURL().href,
-      xhr = this.getXHRtype(url),
-      x = () => {
-        this.config = {
-          'max-results': 150,
-          'start-index': 1,
-          'total-get': 0
-        };
-        this.resetPosts();
-      };
+  async run(callback) {
+    let getTotalPages = async () => {
+      let url = this.createURL().href;
+      return new Promise((resolve) => {
+        this[this.getXHRtype(url)](url, (feeds) => {
+          if (feeds?.feed?.entry) {
+            let totalPosts = feeds.feed.openSearch$totalResults.$t || 0;
+            let totalPages = Math.ceil(totalPosts / this.config['max-results']);
+            resolve(totalPages);
+          } else {
+            resolve(0);
+          }
+        });
+      });
+    };
 
-    this.config['total-get']++;
-    this[xhr](url, (feeds) => {
-      if (feeds && feeds.feed && feeds.feed.entry) {
-        let ix = feeds.feed.openSearch$totalResults.$t || 0,
-          entry = feeds.feed.entry;
-        this.posts = this.getFeed(feeds)
-        if (entry.length >= this.config['max-results']) {
-          this.config['start-index'] += this.config['max-results'];
-
-          if (this.config['firstContent'] && this.config['total-get'] == 1)
-            (callback || this.err)({
-              'totalPosts': ix,
-              'posts': this.posts,
-              'completed': false
-            });
-
-          this.run((callback || this.err));
-        } else {
-          (callback || this.err)({
-            'totalPosts': ix,
-            'totalGet': this.config['total-get'],
-            'posts': this.posts,
-            'completed': true
-          }), x()
-        }
-      } else {
-        (callback || this.err)({
-          'totalPosts': this.posts.length,
-          'totalGet': this.config['total-get'],
-          'posts': this.posts,
-          'completed': true
-        }), x()
+    let getAllPages = async (totalPages) => {
+      let promises = [];
+      for (let page = 1; page <= totalPages; page++) {
+        this.config['start-index'] = ((page - 1) * this.config['max-results']) + 1;
+        let url = this.createURL().href;
+        promises.push(new Promise((resolve) => {
+          this[this.getXHRtype(url)](url, (feeds) => {
+            if (feeds?.feed?.entry) {
+              resolve(this.getFeed(feeds));
+            } else {
+              resolve([]);
+            }
+          });
+        }));
       }
-    });
+      return Promise.all(promises);
+    };
 
+    try {
+      let totalPages = await getTotalPages();
+      let allResults = await getAllPages(totalPages);
+      let posts = allResults.flat();
+      
+      callback({
+        totalPosts: posts.length,
+        totalGet: totalPages,
+        posts: posts,
+        completed: true
+      });
+      
+      // Reset config
+      this.config = {
+        'max-results': 100,
+        'start-index': 1,
+        'total-get': 0
+      };
+      this.resetPosts();
+
+    } catch (err) {
+      console.error(err);
+      callback({
+        totalPosts: 0,
+        totalGet: 0,
+        posts: [],
+        completed: true
+      });
+    }
   }
 };
 
